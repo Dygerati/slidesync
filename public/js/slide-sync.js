@@ -30,7 +30,7 @@
 		takeControlClick: function(e) {
 			e.preventDefault();
 
-			var name = prompt('Please enter your name');
+			var name = rS.retreiveName();
 
 			rS.socket.emit('takeControl', name);
 
@@ -76,6 +76,14 @@
 
 			Reveal.slide(index.h, index.v);
 
+		},
+
+		retreiveName: function() {
+			var name = '';
+			while(!name) {
+				name = prompt('Please enter your name:');
+			}
+			return name;
 		}
 
 	};
