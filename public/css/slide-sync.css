@@ -1,0 +1,19 @@
+
+.hide {
+	display: none;
+}
+
+#reveal-sync-controls {
+	position: absolute;
+	font-size: 16px;
+
+	bottom: 10px;
+	left: 10px;
+	z-index: 11;
+}
+
+.reveal-sync-controls a,
+.reveal-sync-controls p {
+	font-size: inherit;
+	margin: 0;
+}
