@@ -32,11 +32,15 @@
 
 			var name = rS.retreiveName();
 
-			rS.socket.emit('takeControl', name);
+			if(name) {
 
-			$('.rsync-release-control').makeActiveButton();
+				rS.socket.emit('takeControl', name);
 
-			rS.admin = true;
+				$('.rsync-release-control').makeActiveButton();
+
+				rS.admin = true;
+				
+			}
 		},
 
 
@@ -80,9 +84,17 @@
 
 		retreiveName: function() {
 			var name = '';
-			while(!name) {
+
+			//Specifying empty string to allow null values (cancel)
+			while(name === '') {
 				name = prompt('Please enter your name:');
+
+				if(name === '') {
+					alert('You must enter a name to proceed.');
+				}
+
 			}
+
 			return name;
 		}
 

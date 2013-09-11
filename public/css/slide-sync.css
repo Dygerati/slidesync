@@ -12,8 +12,8 @@
 	z-index: 11;
 }
 
-.reveal-sync-controls a,
-.reveal-sync-controls p {
+#reveal-sync-controls a,
+#reveal-sync-controls p {
 	font-size: inherit;
 	margin: 0;
 }
