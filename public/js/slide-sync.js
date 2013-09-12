@@ -1,88 +1,104 @@
 (function(){
 
-	var rS;
+	var sync;
 
 	function slideSync() {
+
+  		var socket = io.connect('http://localhost:3000/sync');
 
 		if ( arguments.callee._singletonInstance )
     		return arguments.callee._singletonInstance;
   		arguments.callee._singletonInstance = this;
 
-  		rS = this;
+  		sync = this;
 
-  		var socket = io.connect('http://localhost:3000/sync');
+  		sync.socket = socket;
+  		sync.admin = false;
 
-  		socket.on('controlAssigned', rS.controlAssignedEvent);
-  		socket.on('controlReleased', rS.controlReleasedEvent);
-  		socket.on('navigateTo', rS.navigateToEvent);
-
-  		$('.rsync-take-control').on('click', rS.takeControlClick);
-  		$('.rsync-release-control').on('click', rS.releaseControlClick);
-
-  		Reveal.addEventListener('slidechanged', rS.slideChangedEvent);
-
-  		rS.socket = socket;
-  		rS.admin = false;
+  		sync.attachEvents();
 	}
 
 	slideSync.prototype = {
 
-		takeControlClick: function(e) {
-			e.preventDefault();
+		attachEvents: function() {
 
-			var name = rS.retreiveName();
+			sync.socket.on('controlAssigned', sync.socketEvents.controlAssignedEvent);
+	  		sync.socket.on('controlReleased', sync.socketEvents.controlReleasedEvent);
+	  		sync.socket.on('navigateTo', sync.socketEvents.navigateToEvent);
 
-			if(name) {
+	  		var takeCtrlBtn = document.querySelectorAll('.rsync-take-control');
+	  		takeCtrlBtn[0].addEventListener('click', sync.DOMEvents.takeControlClick);
 
-				rS.socket.emit('takeControl', name);
+	  		var releaseCtrlBtn = document.querySelectorAll('.rsync-release-control');
+	  		releaseCtrlBtn[0].addEventListener('click', sync.DOMEvents.releaseControlClick);
 
-				$('.rsync-release-control').makeActiveButton();
+	  		Reveal.addEventListener('slidechanged', sync.socketEvents.slideChangedEvent);
+		},	
 
-				rS.admin = true;
+		socketEvents: {
+
+			controlReleasedEvent: function(){
+
+				sync.makeActiveButton(document.querySelectorAll('.rsync-take-control')[0]);
+
+			},
+
+			slideChangedEvent: function(e){
+
+				if(sync.admin) {
+					sync.socket.emit('navigateTo', Reveal.getIndices());
+				}
+
+			},
+
+			controlAssignedEvent: function(name) {
+				var el = document.querySelectorAll('.rsync-is-controlled')[0];
+
+				el.innerHTML = 'Currently following ' + name;
 				
-			}
-		},
+				sync.makeActiveButton(el);
 
+			},
 
-		releaseControlClick: function(e){
-			e.preventDefault();
+			navigateToEvent: function(index) {
 
-			rS.socket.emit('releaseControl');
+				Reveal.slide(index.h, index.v);
 
-			$('.rsync-take-control').makeActiveButton();
-
-			rS.admin = false;
-		},
-
-
-		controlAssignedEvent: function(name) {
-
-			$('.rsync-is-controlled').text('Currently following ' + name)
-				.makeActiveButton();
-
-		},
-
-		controlReleasedEvent: function(){
-
-			$('.rsync-take-control').makeActiveButton();
-
-		},
-
-		slideChangedEvent: function(e){
-
-			if(rS.admin) {
-				rS.socket.emit('navigateTo', Reveal.getIndices());
 			}
 
 		},
 
-		navigateToEvent: function(index) {
+		DOMEvents: {
 
-			Reveal.slide(index.h, index.v);
+			takeControlClick: function(e) {
+				e.preventDefault();
 
+				var name = sync.retrieveName();
+
+				if(name) {
+
+					sync.socket.emit('takeControl', name);
+
+					sync.makeActiveButton(document.querySelectorAll('.rsync-release-control')[0]);
+
+					sync.admin = true;
+					
+				}
+			},
+
+
+			releaseControlClick: function(e){
+				e.preventDefault();
+
+				sync.socket.emit('releaseControl');
+
+				sync.makeActiveButton(document.querySelectorAll('.rsync-take-control')[0]);
+
+				sync.admin = false;
+			}
 		},
 
-		retreiveName: function() {
+		retrieveName: function() {
 			var name = '';
 
 			//Specifying empty string to allow null values (cancel)
@@ -96,18 +112,27 @@
 			}
 
 			return name;
+		},
+
+		makeActiveButton: function(el) {
+			var children = Array.prototype.slice.call(el.parentNode.childNodes).filter(function(child) {
+
+				return (child.nodeType === 1);
+
+			});
+
+			for(var i = 0; i < children.length; i++) {
+
+				var child = children[i];
+
+				child.style.display = 'none';
+			}
+
+			el.style.display = 'block'
 		}
 
 	};
 
 	window.slideSync = new slideSync();
-
-	$.fn.makeActiveButton = function() {
-		var el = $(this);
-
-		el.removeClass('hide')
-			.siblings()
-			.addClass('hide');
-	};
 
 })();

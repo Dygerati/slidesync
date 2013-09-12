@@ -1,5 +1,5 @@
 
-var rS;
+var sync;
 
 function slideSync(http) {
 
@@ -7,7 +7,7 @@ function slideSync(http) {
 		return arguments.callee._singletonInstance;
 	arguments.callee._singletonInstance = this;
 
-	rS = this;
+	sync = this;
 
 	var io = require('socket.io').listen(http);
 
@@ -20,26 +20,26 @@ slideSync.prototype = {
 
 	onConnection: function(socket) {
 
-		if(rS.currentAdmin) {
+		if(sync.currentAdmin) {
 
-			socket.emit('controlAssigned', rS.currentAdmin);
+			socket.emit('controlAssigned', sync.currentAdmin);
 
 		}
 
 		socket.on('takeControl', function(name){
-			rS.onTakeControl(socket, name);
+			sync.onTakeControl(socket, name);
 		});
 
 		socket.on('releaseControl', function(){
-			rS.onReleaseControl(socket);
+			sync.onReleaseControl(socket);
 		});
 
 		socket.on('navigateTo', function(index){
-			rS.onNavigateTo(socket, index);
+			sync.onNavigateTo(socket, index);
 		});
 
 		socket.on('disconnect', function(){
-			rS.onReleaseControl(socket);
+			sync.onReleaseControl(socket);
 		});
 
 	},
@@ -48,7 +48,7 @@ slideSync.prototype = {
 		socket.set('admin', true, function(err) {
 			handleError(err);
 
-			rS.currentAdmin = name;
+			sync.currentAdmin = name;
 
 			socket.broadcast.emit('controlAssigned', name);
 		});
@@ -62,10 +62,9 @@ slideSync.prototype = {
 
 			if(admin) {
 
-				socket.set('admin', false);
 				socket.broadcast.emit('controlReleased');
 
-				rS.currentAdmin = '';
+				sync.currentAdmin = '';
 			}
 
 		});
@@ -100,5 +99,7 @@ function handleError(err) {
 
 
 module.exports = function(http) {
+
 	return new slideSync(http);
+
 }
